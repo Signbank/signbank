@@ -1089,6 +1089,56 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
+from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+import datetime
+RECENTLY_ADDED_TIMEDELTA_60_DAYS = datetime.timedelta(days=60)
+RECENTLY_ADDED_TIMEDELTA_30_DAYS = datetime.timedelta(days=30)
+RECENTLY_ADDED_TIMEDELTA_14_DAYS = datetime.timedelta(days=14)
+RECENTLY_ADDED_TIMEDELTA_7_DAYS = datetime.timedelta(days=7)
+
+
+class RecentGlossSearchForm(forms.ModelForm):
+
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+    days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
+    days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
+    days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
+    days_14 = RECENTLY_ADDED_TIMEDELTA_14_DAYS.days
+    days_7 = RECENTLY_ADDED_TIMEDELTA_7_DAYS.days
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = Gloss
+        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+
+    def __init__(self, *args, **kwargs):
+        super(RecentGlossSearchForm, self).__init__(*args, **kwargs)
+
+        days_default = RECENTLY_ADDED_SIGNS_PERIOD.days
+        days_60 = RECENTLY_ADDED_TIMEDELTA_60_DAYS.days
+        days_30 = RECENTLY_ADDED_TIMEDELTA_30_DAYS.days
+        days_14 = RECENTLY_ADDED_TIMEDELTA_14_DAYS.days
+        days_7 = RECENTLY_ADDED_TIMEDELTA_7_DAYS.days
+
+        self.fields['days'] = forms.ChoiceField(label=_('Days'),
+                                                choices=[(days_default, _('90 days')), (days_60, _('60 days')),
+                                                         (days_30, _('30 days')), (days_14, _('14 days')), (days_7, _('7 days'))],
+                                                widget=forms.RadioSelect, required=True, initial=days_default)
+
+        TIME_ORDER = [('chronological', _('Chronological')), ('reverse', _('Reverse chronological'))]
+
+        self.fields['timeline'] = forms.ChoiceField(label=_('Timeline'),
+                                                    choices=TIME_ORDER,
+                                                    widget=forms.RadioSelect, required=True, initial='chronological')
+        self.fields['timetype'] = forms.ChoiceField(label=_('Time Field'),
+                                                    choices=[('creationDate', _('Creation date')), ('lastUpdated', _('Last updated'))],
+                                                    widget=forms.RadioSelect, required=True, initial='creationDate')
+
+
 class FieldChoiceColorForm(forms.Form):
     field_color = forms.CharField(widget=ColorWidget)
     readonly_fields = ['machine_value']
